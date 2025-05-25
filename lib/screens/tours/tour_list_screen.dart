@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:cached_network_image/cached_network_image.dart'; // Not used directly in this file
 import 'package:shimmer/shimmer.dart';
 import '../../constants/colors.dart';
+import '../../constants/styles.dart';
 import '../../constants/routes.dart';
 import '../../models/tour_models.dart';
 import '../../services/auth_service.dart';
 import '../../services/tour_service.dart';
-// import '../../utils/responsive.dart'; // Using MediaQuery directly for more granular control
 import '../../widgets/common/glass_card.dart';
-import 'tour_card.dart';
+import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/tours/tour_grid.dart';
+import '../../widgets/tours/tour_search_bar.dart';
 import 'tour_filters.dart';
 
 class TourListScreen extends StatefulWidget {
@@ -42,22 +43,48 @@ class _TourListScreenState extends State<TourListScreen>
   String _sortBy = 'name';
   bool _ascending = true;
 
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+  late AnimationController _headerAnimationController;
+  late AnimationController _listAnimationController;
+  late Animation<double> _headerFadeAnimation;
+  late Animation<Offset> _headerSlideAnimation;
+  late Animation<double> _listFadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+
+    _headerAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _listAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    _headerFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _headerAnimationController,
+        curve: Curves.easeOut,
+      ),
     );
 
-    _animationController.forward();
+    _headerSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _headerAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _listFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _listAnimationController, curve: Curves.easeOut),
+    );
+
+    _headerAnimationController.forward();
     _loadTours();
 
     _scrollController.addListener(() {
@@ -68,14 +95,29 @@ class _TourListScreenState extends State<TourListScreen>
         }
       }
     });
+
+    // Search debouncing
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _headerAnimationController.dispose();
+    _listAnimationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    // Simple debouncing - in production, consider using a proper debouncer
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _searchController.text.length >= 2) {
+        _loadTours();
+      } else if (mounted && _searchController.text.isEmpty) {
+        _loadTours();
+      }
+    });
   }
 
   Future<void> _loadTours() async {
@@ -83,31 +125,11 @@ class _TourListScreenState extends State<TourListScreen>
       setState(() {
         _isLoading = true;
         _error = null;
-        _tours = []; // Clear previous tours before new load
-        _currentPage = 1; // Reset current page
+        _tours = [];
+        _currentPage = 1;
       });
 
-      // Determine pageSize based on typical columns to fetch enough items
-      // This ensures a smoother initial load that fills the screen better.
-      // Needs to be called within a context-aware part or passed if called from initState.
-      // For initState, we might use a default or estimate.
-      // Let's use a default for now in initState, and adjust if context is available (e.g. in build or didChangeDependencies)
-      // However, since _loadTours can be called from various places, we get context here if possible.
-      int pageSize = 10; // Default
-      if (mounted) {
-        // Check if the widget is mounted to safely access context
-        final screenWidth = MediaQuery.of(context).size.width;
-        if (screenWidth >= 1600)
-          pageSize = 18; // 6 columns * 3 rows
-        else if (screenWidth >= 1200)
-          pageSize = 15; // 5 columns * 3 rows
-        else if (screenWidth >= 800)
-          pageSize = 12; // 4 columns * 3 rows
-        else if (screenWidth >= 600)
-          pageSize = 9; // 3 columns * 3 rows
-        else
-          pageSize = 8; // 2 columns * 4 rows
-      }
+      int pageSize = _calculatePageSize();
 
       final response = await _tourService.getTours(
         searchTerm:
@@ -131,6 +153,7 @@ class _TourListScreenState extends State<TourListScreen>
           _totalPages = response.totalPages;
           _isLoading = false;
         });
+        _listAnimationController.forward();
       }
     } catch (e) {
       if (mounted) {
@@ -143,7 +166,7 @@ class _TourListScreenState extends State<TourListScreen>
   }
 
   Future<void> _loadMoreTours() async {
-    if (_isLoadingMore || _isLoading) return; // Prevent multiple calls
+    if (_isLoadingMore || _isLoading) return;
 
     try {
       if (mounted) {
@@ -152,20 +175,7 @@ class _TourListScreenState extends State<TourListScreen>
         });
       }
 
-      int pageSize = 10; // Default
-      if (mounted) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        if (screenWidth >= 1600)
-          pageSize = 12;
-        else if (screenWidth >= 1200)
-          pageSize = 10;
-        else if (screenWidth >= 800)
-          pageSize = 8;
-        else if (screenWidth >= 600)
-          pageSize = 6;
-        else
-          pageSize = 6;
-      }
+      int pageSize = _calculatePageSize();
 
       final response = await _tourService.getTours(
         searchTerm:
@@ -196,6 +206,13 @@ class _TourListScreenState extends State<TourListScreen>
         });
       }
     }
+  }
+
+  int _calculatePageSize() {
+    if (!mounted) return 10;
+
+    final crossAxisCount = context.tourGridCrossAxisCount;
+    return crossAxisCount * 4; // Load 4 rows at a time
   }
 
   void _showFilters() {
@@ -230,6 +247,15 @@ class _TourListScreenState extends State<TourListScreen>
     );
   }
 
+  bool get _hasActiveFilters {
+    return _selectedLocation != null ||
+        _selectedCategory != null ||
+        _selectedDifficulty != null ||
+        _selectedActivity != null ||
+        _minPrice != null ||
+        _maxPrice != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
@@ -240,14 +266,10 @@ class _TourListScreenState extends State<TourListScreen>
         child: SafeArea(
           child: Column(
             children: [
-              _buildAppBar(authService),
-              _buildSearchBar(),
-              Expanded(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: _buildContent(),
-                ),
-              ),
+              _buildHeader(authService),
+              _buildSearchSection(),
+              if (_hasActiveFilters) _buildActiveFiltersBar(),
+              Expanded(child: _buildContent()),
             ],
           ),
         ),
@@ -255,198 +277,251 @@ class _TourListScreenState extends State<TourListScreen>
     );
   }
 
-  Widget _buildAppBar(AuthService authService) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.explore, color: Colors.white, size: 28),
+  Widget _buildHeader(AuthService authService) {
+    return FadeTransition(
+      opacity: _headerFadeAnimation,
+      child: SlideTransition(
+        position: _headerSlideAnimation,
+        child: Container(
+          padding: EdgeInsets.all(context.isMobile ? 20 : 24),
+          child: Row(
+            children: [
+              _buildLogo(),
+              const SizedBox(width: AppStyles.spacingMD),
+              Expanded(child: _buildHeaderText()),
+              _buildProfileMenu(authService),
+            ],
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Wanderlust',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  'Discover Your Next Adventure',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'logout') {
-                await authService.logout();
-                if (mounted) {
-                  Navigator.of(context).pushReplacementNamed(Routes.login);
-                }
-              } else if (value == 'profile') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile clicked')),
-                );
-              } else if (value == 'bookings') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('My Bookings clicked')),
-                );
-              }
-            },
-            itemBuilder:
-                (context) => [
-                  const PopupMenuItem(
-                    value: 'profile',
-                    child: Row(
-                      children: [
-                        Icon(Icons.person_outline, size: 20),
-                        SizedBox(width: 12),
-                        Text('Profile'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'bookings',
-                    child: Row(
-                      children: [
-                        Icon(Icons.event_note_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Text('My Bookings'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        Icon(Icons.logout, size: 20),
-                        SizedBox(width: 12),
-                        Text('Logout'),
-                      ],
-                    ),
-                  ),
-                ],
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.surface.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSearchBar() {
-    final hasFilters =
-        _selectedLocation != null ||
-        _selectedCategory != null ||
-        _selectedDifficulty != null ||
-        _selectedActivity != null ||
-        _minPrice != null ||
-        _maxPrice != null;
-
+  Widget _buildLogo() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search tours...',
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: AppColors.textSecondary,
-                ),
-                filled: true,
-                fillColor: AppColors.surface.withOpacity(0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                suffixIcon:
-                    _searchController.text.isNotEmpty
-                        ? IconButton(
-                          icon: const Icon(
-                            Icons.clear,
-                            color: AppColors.textSecondary,
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            _loadTours();
-                          },
-                        )
-                        : null,
-              ),
-              onSubmitted: (_) => _loadTours(),
-            ),
+      width: context.isMobile ? 50 : 60,
+      height: context.isMobile ? 50 : 60,
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(AppStyles.radiusLG),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
-          const SizedBox(width: 12),
-          GlassCard(
-            padding: const EdgeInsets.all(12),
-            borderRadius: 12,
-            child: InkWell(
-              onTap: _showFilters,
-              child: Stack(
-                alignment: Alignment.center,
+        ],
+      ),
+      child: Icon(
+        Icons.explore,
+        color: Colors.white,
+        size: context.isMobile ? 28 : 32,
+      ),
+    );
+  }
+
+  Widget _buildHeaderText() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Wanderlust',
+          style: (context.isMobile
+                  ? AppStyles.headingSmall
+                  : AppStyles.headingMedium)
+              .copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Discover Your Next Adventure',
+          style: AppStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: context.isMobile ? 12 : 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileMenu(AuthService authService) {
+    return PopupMenuButton<String>(
+      onSelected: (value) async {
+        switch (value) {
+          case 'logout':
+            await authService.logout();
+            if (mounted) {
+              Navigator.of(context).pushReplacementNamed(Routes.login);
+            }
+            break;
+          case 'profile':
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Profile clicked')));
+            break;
+          case 'bookings':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('My Bookings clicked')),
+            );
+            break;
+        }
+      },
+      itemBuilder:
+          (context) => [
+            const PopupMenuItem(
+              value: 'profile',
+              child: Row(
                 children: [
-                  Icon(
-                    Icons.tune_outlined,
-                    color:
-                        hasFilters
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                  ),
-                  if (hasFilters)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 8,
-                          minHeight: 8,
-                        ),
-                      ),
-                    ),
+                  Icon(Icons.person_outline, size: 20),
+                  SizedBox(width: 12),
+                  Text('Profile'),
                 ],
               ),
             ),
-          ),
-        ],
+            const PopupMenuItem(
+              value: 'bookings',
+              child: Row(
+                children: [
+                  Icon(Icons.event_note_outlined, size: 20),
+                  SizedBox(width: 12),
+                  Text('My Bookings'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout, size: 20),
+                  SizedBox(width: 12),
+                  Text('Logout'),
+                ],
+              ),
+            ),
+          ],
+      child: Container(
+        padding: const EdgeInsets.all(AppStyles.spacingSM),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(AppStyles.radiusMD),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        ),
+        child: const Icon(
+          Icons.more_vert,
+          color: AppColors.textPrimary,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchSection() {
+    return TourSearchBar(
+      controller: _searchController,
+      hintText: 'Search destinations, tours, activities...',
+      onSearch: _loadTours,
+      onFilter: _showFilters,
+      hasActiveFilters: _hasActiveFilters,
+      isLoading: _isLoading,
+    );
+  }
+
+  Widget _buildActiveFiltersBar() {
+    final activeFilters = <String>[];
+    if (_selectedLocation != null)
+      activeFilters.add('Location: $_selectedLocation');
+    if (_selectedCategory != null)
+      activeFilters.add('Category: $_selectedCategory');
+    if (_selectedDifficulty != null)
+      activeFilters.add('Difficulty: $_selectedDifficulty');
+    if (_selectedActivity != null)
+      activeFilters.add('Activity: $_selectedActivity');
+    if (_minPrice != null || _maxPrice != null) {
+      activeFilters.add(
+        'Price: \$${_minPrice?.toInt() ?? 0} - \$${_maxPrice?.toInt() ?? 'Any'}',
+      );
+    }
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.only(bottom: AppStyles.spacingSM),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppStyles.spacingMD),
+        itemCount: activeFilters.length + 1,
+        separatorBuilder:
+            (context, index) => const SizedBox(width: AppStyles.spacingSM),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildClearFiltersChip();
+          }
+          return _buildFilterChip(activeFilters[index - 1]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildClearFiltersChip() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedLocation = null;
+          _selectedCategory = null;
+          _selectedDifficulty = null;
+          _selectedActivity = null;
+          _minPrice = null;
+          _maxPrice = null;
+        });
+        _loadTours();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppStyles.spacingMD,
+          vertical: AppStyles.spacingSM,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.error.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.clear_all, color: AppColors.error, size: 16),
+            const SizedBox(width: AppStyles.spacingXS),
+            Text(
+              'Clear All',
+              style: AppStyles.bodySmall.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String filter) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppStyles.spacingMD,
+        vertical: AppStyles.spacingSM,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+      ),
+      child: Text(
+        filter,
+        style: AppStyles.bodySmall.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -464,89 +539,73 @@ class _TourListScreenState extends State<TourListScreen>
       return _buildEmptyState();
     }
 
-    return _buildTourGrid();
+    return FadeTransition(
+      opacity: _listFadeAnimation,
+      child: TourGrid(
+        tours: _tours,
+        isLoading: false,
+        isLoadingMore: _isLoadingMore,
+        onRefresh: _loadTours,
+        onLoadMore: _loadMoreTours,
+        scrollController: _scrollController,
+      ),
+    );
   }
 
   Widget _buildLoadingState() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    int determinedCrossAxisCount;
-    double determinedChildAspectRatio;
-
-    if (screenWidth >= 1600) {
-      // Very Large Desktop
-      determinedCrossAxisCount = 6;
-      determinedChildAspectRatio = 0.60;
-    } else if (screenWidth >= 1200) {
-      // Large Desktop
-      determinedCrossAxisCount = 5;
-      determinedChildAspectRatio = 0.65;
-    } else if (screenWidth >= 900) {
-      // Medium Desktop / Large Tablet
-      determinedCrossAxisCount = 4;
-      determinedChildAspectRatio = 0.68;
-    } else if (screenWidth >= 600) {
-      // Tablet
-      determinedCrossAxisCount = 3;
-      determinedChildAspectRatio = 0.75;
-    } else {
-      // Mobile
-      determinedCrossAxisCount = 2;
-      determinedChildAspectRatio = 0.75;
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: determinedCrossAxisCount,
-        childAspectRatio: determinedChildAspectRatio,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: determinedCrossAxisCount * 2,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: AppColors.surface,
-          highlightColor: AppColors.surfaceLight,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        );
-      },
+    return TourGrid(
+      tours: const [],
+      isLoading: true,
+      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
     );
   }
 
   Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(context.isMobile ? 20 : 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text(
-              'Oops! Something went wrong',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(
+                  color: AppColors.error.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                size: 40,
+                color: AppColors.error,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppStyles.spacingLG),
+            Text(
+              'Oops! Something went wrong',
+              style: AppStyles.headingSmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppStyles.spacingSM),
             Text(
               _error ?? 'Failed to load tours. Please check your connection.',
+              style: AppStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppStyles.spacingXL),
             ElevatedButton.icon(
               onPressed: _loadTours,
               icon: const Icon(Icons.refresh),
               label: const Text('Try Again'),
+              style: AppStyles.primaryButtonStyle,
             ),
           ],
         ),
@@ -557,28 +616,45 @@ class _TourListScreenState extends State<TourListScreen>
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(context.isMobile ? 20 : 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 64, color: AppColors.textSecondary),
-            const SizedBox(height: 16),
-            Text(
-              'No tours found',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(
+                  color: AppColors.border.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                Icons.explore_off_outlined,
+                size: 50,
+                color: AppColors.textSecondary.withOpacity(0.5),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppStyles.spacingXL),
             Text(
-              'Try adjusting your filters or search term.',
+              'No tours found',
+              style: AppStyles.headingSmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppStyles.spacingSM),
+            Text(
+              'Try adjusting your search criteria or explore different destinations.',
+              style: AppStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppStyles.spacingXL),
             ElevatedButton.icon(
               onPressed: () {
                 _searchController.clear();
@@ -596,72 +672,10 @@ class _TourListScreenState extends State<TourListScreen>
               },
               icon: const Icon(Icons.filter_alt_off_outlined),
               label: const Text('Clear Filters'),
+              style: AppStyles.primaryButtonStyle,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTourGrid() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    int determinedCrossAxisCount;
-    double determinedChildAspectRatio;
-
-    if (screenWidth >= 1600) {
-      // Very Large Desktop
-      determinedCrossAxisCount = 6;
-      determinedChildAspectRatio = 0.60;
-    } else if (screenWidth >= 1200) {
-      // Large Desktop
-      determinedCrossAxisCount = 5;
-      determinedChildAspectRatio = 0.65;
-    } else if (screenWidth >= 900) {
-      // Medium Desktop / Large Tablet
-      determinedCrossAxisCount = 4;
-      determinedChildAspectRatio = 0.68;
-    } else if (screenWidth >= 600) {
-      // Tablet
-      determinedCrossAxisCount = 3;
-      determinedChildAspectRatio = 0.75;
-    } else {
-      // Mobile
-      determinedCrossAxisCount = 2;
-      determinedChildAspectRatio = 0.75;
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadTours,
-      color: AppColors.primary,
-      backgroundColor: AppColors.backgroundSecondary,
-      child: GridView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(20),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: determinedCrossAxisCount,
-          childAspectRatio: determinedChildAspectRatio,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount:
-            _isLoadingMore
-                ? _tours.length + determinedCrossAxisCount
-                : _tours.length,
-        itemBuilder: (context, index) {
-          if (index >= _tours.length) {
-            return Shimmer.fromColors(
-              baseColor: AppColors.surface,
-              highlightColor: AppColors.surfaceLight,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            );
-          }
-          return TourCard(tour: _tours[index]);
-        },
       ),
     );
   }

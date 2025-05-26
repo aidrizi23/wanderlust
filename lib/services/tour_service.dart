@@ -23,22 +23,29 @@ class TourService {
     try {
       final queryParams = <String, String>{};
 
-      if (searchTerm != null && searchTerm.isNotEmpty)
+      if (searchTerm != null && searchTerm.isNotEmpty) {
         queryParams['searchTerm'] = searchTerm;
-      if (location != null && location.isNotEmpty)
+      }
+      if (location != null && location.isNotEmpty) {
         queryParams['location'] = location;
-      if (category != null && category.isNotEmpty)
+      }
+      if (category != null && category.isNotEmpty) {
         queryParams['category'] = category;
-      if (difficultyLevel != null && difficultyLevel.isNotEmpty)
+      }
+      if (difficultyLevel != null && difficultyLevel.isNotEmpty) {
         queryParams['difficultyLevel'] = difficultyLevel;
-      if (activityType != null && activityType.isNotEmpty)
+      }
+      if (activityType != null && activityType.isNotEmpty) {
         queryParams['activityType'] = activityType;
+      }
       if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
       if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
-      if (minDuration != null)
+      if (minDuration != null) {
         queryParams['minDuration'] = minDuration.toString();
-      if (maxDuration != null)
+      }
+      if (maxDuration != null) {
         queryParams['maxDuration'] = maxDuration.toString();
+      }
       if (sortBy != null && sortBy.isNotEmpty) queryParams['sortBy'] = sortBy;
       queryParams['ascending'] = ascending.toString();
       queryParams['pageIndex'] = pageIndex.toString();

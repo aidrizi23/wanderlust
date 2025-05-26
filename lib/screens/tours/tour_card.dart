@@ -10,7 +10,7 @@ import '../../widgets/common/glass_card.dart';
 class TourCard extends StatelessWidget {
   final Tour tour;
 
-  const TourCard({Key? key, required this.tour}) : super(key: key);
+  const TourCard({super.key, required this.tour});
 
   @override
   Widget build(BuildContext context) {

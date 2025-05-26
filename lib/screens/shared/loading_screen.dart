@@ -6,8 +6,7 @@ class LoadingScreen extends StatefulWidget {
   final String? message;
   final bool showLogo;
 
-  const LoadingScreen({Key? key, this.message, this.showLogo = true})
-    : super(key: key);
+  const LoadingScreen({super.key, this.message, this.showLogo = true});
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
@@ -173,11 +172,11 @@ class SimpleLoadingIndicator extends StatefulWidget {
   final double strokeWidth;
 
   const SimpleLoadingIndicator({
-    Key? key,
+    super.key,
     this.size = 24,
     this.color,
     this.strokeWidth = 2.5,
-  }) : super(key: key);
+  });
 
   @override
   State<SimpleLoadingIndicator> createState() => _SimpleLoadingIndicatorState();
@@ -224,11 +223,11 @@ class PulsingDot extends StatefulWidget {
   final Duration duration;
 
   const PulsingDot({
-    Key? key,
+    super.key,
     this.size = 12,
     this.color = AppColors.primary,
     this.duration = const Duration(milliseconds: 800),
-  }) : super(key: key);
+  });
 
   @override
   State<PulsingDot> createState() => _PulsingDotState();

@@ -98,13 +98,11 @@ class WanderlustApp extends StatelessWidget {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.accent,
-        surface: AppColors.surface, // Used for cards, dialogs etc.
-        background: AppColors.background, // Overall background
+        surface: AppColors.surface, // Overall background
         error: AppColors.error,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme).apply(

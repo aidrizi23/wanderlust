@@ -11,14 +11,14 @@ class SocialLoginButtons extends StatelessWidget {
   final bool showFacebook;
 
   const SocialLoginButtons({
-    Key? key,
+    super.key,
     this.onGooglePressed,
     this.onApplePressed,
     this.onFacebookPressed,
     this.isLoading = false,
     this.showApple = false,
     this.showFacebook = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -237,11 +237,11 @@ class QuickSocialLogin extends StatelessWidget {
   final bool isLoading;
 
   const QuickSocialLogin({
-    Key? key,
+    super.key,
     this.onGooglePressed,
     this.onApplePressed,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +311,7 @@ class _QuickSocialButton extends StatelessWidget {
 class SocialLoginDivider extends StatelessWidget {
   final String text;
 
-  const SocialLoginDivider({Key? key, this.text = 'OR'}) : super(key: key);
+  const SocialLoginDivider({super.key, this.text = 'OR'});
 
   @override
   Widget build(BuildContext context) {

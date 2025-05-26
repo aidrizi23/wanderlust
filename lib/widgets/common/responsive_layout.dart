@@ -7,12 +7,12 @@ class ResponsiveLayout extends StatelessWidget {
   final Widget? watch;
 
   const ResponsiveLayout({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     required this.desktop,
     this.watch,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class ResponsiveLayout extends StatelessWidget {
 class ResponsiveBuilder extends StatelessWidget {
   final Widget Function(BuildContext context, DeviceType deviceType) builder;
 
-  const ResponsiveBuilder({Key? key, required this.builder}) : super(key: key);
+  const ResponsiveBuilder({super.key, required this.builder});
 
   @override
   Widget build(BuildContext context) {
@@ -208,12 +208,12 @@ class ResponsiveContainer extends StatelessWidget {
   final bool center;
 
   const ResponsiveContainer({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.maxWidth,
     this.center = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -243,14 +243,14 @@ class ResponsiveGrid extends StatelessWidget {
   final EdgeInsets? padding;
 
   const ResponsiveGrid({
-    Key? key,
+    super.key,
     required this.children,
     this.crossAxisCount,
     this.mainAxisSpacing = 16,
     this.crossAxisSpacing = 16,
     this.childAspectRatio = 1.0,
     this.padding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -281,12 +281,12 @@ class ResponsiveRow extends StatelessWidget {
   final bool wrapOnMobile;
 
   const ResponsiveRow({
-    Key? key,
+    super.key,
     required this.children,
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.center,
     this.wrapOnMobile = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +323,7 @@ class AdaptiveScaffold extends StatelessWidget {
   final bool extendBodyBehindAppBar;
 
   const AdaptiveScaffold({
-    Key? key,
+    super.key,
     required this.body,
     this.appBar,
     this.drawer,
@@ -332,7 +332,7 @@ class AdaptiveScaffold extends StatelessWidget {
     this.bottomNavigationBar,
     this.extendBody = false,
     this.extendBodyBehindAppBar = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

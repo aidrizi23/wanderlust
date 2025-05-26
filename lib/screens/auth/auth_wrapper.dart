@@ -6,7 +6,7 @@ import '../../screens/auth/login_screen.dart';
 import '../../screens/tours/tour_list_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key});
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -40,7 +40,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 }
 
 class LoadingScreen extends StatefulWidget {
-  const LoadingScreen({Key? key}) : super(key: key);
+  const LoadingScreen({super.key});
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();

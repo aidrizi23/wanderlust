@@ -14,7 +14,7 @@ import '../../widgets/tours/tour_search_bar.dart';
 import 'tour_filters.dart';
 
 class TourListScreen extends StatefulWidget {
-  const TourListScreen({Key? key}) : super(key: key);
+  const TourListScreen({super.key});
 
   @override
   State<TourListScreen> createState() => _TourListScreenState();
@@ -431,14 +431,18 @@ class _TourListScreenState extends State<TourListScreen>
 
   Widget _buildActiveFiltersBar() {
     final activeFilters = <String>[];
-    if (_selectedLocation != null)
+    if (_selectedLocation != null) {
       activeFilters.add('Location: $_selectedLocation');
-    if (_selectedCategory != null)
+    }
+    if (_selectedCategory != null) {
       activeFilters.add('Category: $_selectedCategory');
-    if (_selectedDifficulty != null)
+    }
+    if (_selectedDifficulty != null) {
       activeFilters.add('Difficulty: $_selectedDifficulty');
-    if (_selectedActivity != null)
+    }
+    if (_selectedActivity != null) {
       activeFilters.add('Activity: $_selectedActivity');
+    }
     if (_minPrice != null || _maxPrice != null) {
       activeFilters.add(
         'Price: \$${_minPrice?.toInt() ?? 0} - \$${_maxPrice?.toInt() ?? 'Any'}',

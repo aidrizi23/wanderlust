@@ -16,7 +16,7 @@ class TourGrid extends StatefulWidget {
   final EdgeInsets? padding;
 
   const TourGrid({
-    Key? key,
+    super.key,
     required this.tours,
     this.isLoading = false,
     this.isLoadingMore = false,
@@ -24,7 +24,7 @@ class TourGrid extends StatefulWidget {
     this.onLoadMore,
     this.scrollController,
     this.padding,
-  }) : super(key: key);
+  });
 
   @override
   State<TourGrid> createState() => _TourGridState();
@@ -192,12 +192,12 @@ class TourGridCompact extends StatelessWidget {
   final EdgeInsets? padding;
 
   const TourGridCompact({
-    Key? key,
+    super.key,
     required this.tours,
     this.maxItems = 6,
     this.onSeeAll,
     this.padding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -254,8 +254,7 @@ class TourGridStaggered extends StatelessWidget {
   final List<Tour> tours;
   final EdgeInsets? padding;
 
-  const TourGridStaggered({Key? key, required this.tours, this.padding})
-    : super(key: key);
+  const TourGridStaggered({super.key, required this.tours, this.padding});
 
   @override
   Widget build(BuildContext context) {
@@ -302,14 +301,14 @@ class TourGridSection extends StatelessWidget {
   final int maxItems;
 
   const TourGridSection({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     required this.tours,
     this.isLoading = false,
     this.onSeeAll,
     this.maxItems = 6,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

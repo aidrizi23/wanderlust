@@ -9,12 +9,12 @@ class AuthHeader extends StatefulWidget {
   final bool showLogo;
 
   const AuthHeader({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     this.icon,
     this.showLogo = true,
-  }) : super(key: key);
+  });
 
   @override
   State<AuthHeader> createState() => _AuthHeaderState();
@@ -150,8 +150,7 @@ class AuthHeaderMinimal extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  const AuthHeaderMinimal({Key? key, required this.title, this.subtitle})
-    : super(key: key);
+  const AuthHeaderMinimal({super.key, required this.title, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -182,11 +181,11 @@ class AuthWelcomeHeader extends StatefulWidget {
   final String tagline;
 
   const AuthWelcomeHeader({
-    Key? key,
+    super.key,
     this.welcomeText = 'Welcome to',
     this.appName = 'Wanderlust',
     this.tagline = 'Discover Your Next Adventure',
-  }) : super(key: key);
+  });
 
   @override
   State<AuthWelcomeHeader> createState() => _AuthWelcomeHeaderState();

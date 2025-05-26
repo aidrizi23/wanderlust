@@ -15,7 +15,7 @@ class TourFilters extends StatefulWidget {
   final Function(Map<String, dynamic>) onApplyFilters;
 
   const TourFilters({
-    Key? key,
+    super.key,
     this.selectedLocation,
     this.selectedCategory,
     this.selectedDifficulty,
@@ -25,7 +25,7 @@ class TourFilters extends StatefulWidget {
     required this.sortBy,
     required this.ascending,
     required this.onApplyFilters,
-  }) : super(key: key);
+  });
 
   @override
   State<TourFilters> createState() => _TourFiltersState();

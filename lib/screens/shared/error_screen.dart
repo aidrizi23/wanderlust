@@ -11,13 +11,13 @@ class ErrorScreen extends StatefulWidget {
   final IconData? icon;
 
   const ErrorScreen({
-    Key? key,
+    super.key,
     this.title,
     this.message,
     this.onRetry,
     this.retryButtonText,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   State<ErrorScreen> createState() => _ErrorScreenState();
@@ -147,7 +147,7 @@ class _ErrorScreenState extends State<ErrorScreen>
 class NetworkErrorScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const NetworkErrorScreen({Key? key, this.onRetry}) : super(key: key);
+  const NetworkErrorScreen({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +165,7 @@ class NetworkErrorScreen extends StatelessWidget {
 class NotFoundErrorScreen extends StatelessWidget {
   final VoidCallback? onGoBack;
 
-  const NotFoundErrorScreen({Key? key, this.onGoBack}) : super(key: key);
+  const NotFoundErrorScreen({super.key, this.onGoBack});
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +183,7 @@ class NotFoundErrorScreen extends StatelessWidget {
 class ServerErrorScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const ServerErrorScreen({Key? key, this.onRetry}) : super(key: key);
+  const ServerErrorScreen({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {

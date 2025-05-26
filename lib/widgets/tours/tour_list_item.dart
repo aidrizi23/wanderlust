@@ -17,13 +17,13 @@ class TourListItem extends StatefulWidget {
   final bool showDescription;
 
   const TourListItem({
-    Key? key,
+    super.key,
     required this.tour,
     this.onTap,
     this.onFavorite,
     this.isFavorite = false,
     this.showDescription = true,
-  }) : super(key: key);
+  });
 
   @override
   State<TourListItem> createState() => _TourListItemState();
@@ -99,7 +99,7 @@ class _TourListItemState extends State<TourListItem>
   }
 
   Widget _buildImageSection() {
-    return Container(
+    return SizedBox(
       height: 200,
       width: double.infinity,
       child: ClipRRect(
@@ -441,8 +441,7 @@ class TourListItemCompact extends StatelessWidget {
   final Tour tour;
   final VoidCallback? onTap;
 
-  const TourListItemCompact({Key? key, required this.tour, this.onTap})
-    : super(key: key);
+  const TourListItemCompact({super.key, required this.tour, this.onTap});
 
   @override
   Widget build(BuildContext context) {

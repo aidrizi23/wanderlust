@@ -13,7 +13,7 @@ class TourSearchBar extends StatefulWidget {
   final bool isLoading;
 
   const TourSearchBar({
-    Key? key,
+    super.key,
     this.controller,
     this.hintText,
     this.onSearch,
@@ -21,7 +21,7 @@ class TourSearchBar extends StatefulWidget {
     this.onChanged,
     this.hasActiveFilters = false,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   State<TourSearchBar> createState() => _TourSearchBarState();
@@ -241,12 +241,12 @@ class TourSearchBarCompact extends StatefulWidget {
   final bool readOnly;
 
   const TourSearchBarCompact({
-    Key? key,
+    super.key,
     this.controller,
     this.hintText,
     this.onTap,
     this.readOnly = false,
-  }) : super(key: key);
+  });
 
   @override
   State<TourSearchBarCompact> createState() => _TourSearchBarCompactState();
@@ -325,12 +325,15 @@ class QuickSearchChips extends StatelessWidget {
   final List<String> suggestions;
   final ValueChanged<String>? onChipTap;
 
-  const QuickSearchChips({Key? key, required this.suggestions, this.onChipTap})
-    : super(key: key);
+  const QuickSearchChips({
+    super.key,
+    required this.suggestions,
+    this.onChipTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
@@ -379,11 +382,11 @@ class SearchSuggestions extends StatelessWidget {
   final VoidCallback? onClear;
 
   const SearchSuggestions({
-    Key? key,
+    super.key,
     required this.suggestions,
     this.onSuggestionTap,
     this.onClear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -436,7 +439,7 @@ class SearchSuggestions extends StatelessWidget {
               onTap: () => onSuggestionTap?.call(suggestion),
               dense: true,
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -449,11 +452,11 @@ class SearchFiltersBar extends StatelessWidget {
   final VoidCallback? onClearAll;
 
   const SearchFiltersBar({
-    Key? key,
+    super.key,
     required this.activeFilters,
     this.onFilterRemove,
     this.onClearAll,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

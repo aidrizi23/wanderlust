@@ -8,12 +8,12 @@ class AnimatedLoader extends StatefulWidget {
   final Duration duration;
 
   const AnimatedLoader({
-    Key? key,
+    super.key,
     this.size = 40,
     this.color,
     this.type = AnimatedLoaderType.dots,
     this.duration = const Duration(milliseconds: 1200),
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedLoader> createState() => _AnimatedLoaderState();
@@ -306,12 +306,12 @@ class LoadingDots extends StatefulWidget {
   final Duration duration;
 
   const LoadingDots({
-    Key? key,
+    super.key,
     this.count = 3,
     this.dotSize = 8,
     this.color = AppColors.primary,
     this.duration = const Duration(milliseconds: 1000),
-  }) : super(key: key);
+  });
 
   @override
   State<LoadingDots> createState() => _LoadingDotsState();
@@ -371,11 +371,11 @@ class CircularLoader extends StatefulWidget {
   final double strokeWidth;
 
   const CircularLoader({
-    Key? key,
+    super.key,
     this.size = 24,
     this.color = AppColors.primary,
     this.strokeWidth = 2.5,
-  }) : super(key: key);
+  });
 
   @override
   State<CircularLoader> createState() => _CircularLoaderState();

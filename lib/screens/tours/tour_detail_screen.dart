@@ -15,7 +15,7 @@ import '../../widgets/common/responsive_layout.dart';
 class TourDetailScreen extends StatefulWidget {
   final int tourId;
 
-  const TourDetailScreen({Key? key, required this.tourId}) : super(key: key);
+  const TourDetailScreen({super.key, required this.tourId});
 
   @override
   State<TourDetailScreen> createState() => _TourDetailScreenState();
@@ -123,8 +123,10 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       int tabCount = 0;
       if (_tourDetails!.itineraryItems.isNotEmpty) tabCount++;
       if (_tourDetails!.features.isNotEmpty) tabCount++;
-      if (_tourDetails!.images.isNotEmpty || _tourDetails!.mainImageUrl != null)
+      if (_tourDetails!.images.isNotEmpty ||
+          _tourDetails!.mainImageUrl != null) {
         tabCount++;
+      }
 
       if (tabCount > 0) {
         _tabController = TabController(length: tabCount, vsync: this);
@@ -883,7 +885,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       builder: (context, child) {
         return Transform.scale(
           scale: _fabScaleAnimation.value,
-          child: Container(
+          child: SizedBox(
             width:
                 context.isMobile
                     ? MediaQuery.of(context).size.width * 0.9
@@ -988,7 +990,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   surface: AppColors.surface,
                   onSurface: AppColors.textPrimary,
                 ),
-                dialogBackgroundColor: AppColors.backgroundSecondary,
+                dialogTheme: DialogThemeData(
+                  backgroundColor: AppColors.backgroundSecondary,
+                ),
               ),
               child: child!,
             );
